@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}Order #{{ order.pk }}{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>Order #{{ order.pk }}</h1><p class="muted" style="margin:6px 0 0"><span class="pill {{ order.status }}">{{ order.get_status_display }}</span> Placed {{ order.created_at|date:"j M Y, g:i a" }} by {{ order.buyer.display_name }}</p></div>
+  {% if not farmer_view and order.can_cancel and order.buyer == user %}<form method="post" action="{% url 'market:order_cancel' order.pk %}">{% csrf_token %}<button class="btn danger" type="submit">Cancel order</button></form>{% endif %}</div>
+{% if farmer_view %}
+<div class="slip tight"><div class="head"><h2>Your items in this order</h2></div>
+  <table class="ledger"><thead><tr><th>{{ t.crop }}</th><th>Grade</th><th class="r">Kilograms</th><th class="r">Price / kg</th><th class="r">You receive</th></tr></thead>
+  <tbody>{% for i in farmer_items %}<tr><td>{{ i.listing.crop }}</td><td><span class="stamp {{ i.grade }}">{{ i.grade }}</span></td><td class="n">{{ i.quantity_kg|kg:1 }}</td><td class="n">{{ i.price_per_kg|inr:2 }}</td><td class="n">{{ i.line_total|inr:2 }}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}
+<div class="cols two">
+  <div class="stack">
+    <section class="slip tight"><div class="head"><h2>Items</h2></div>
+      <table class="ledger"><thead><tr><th>{{ t.crop }}</th><th>{{ t.farmer }}</th><th class="r">Kilograms</th><th class="r">Price / kg</th><th class="r">Amount</th></tr></thead>
+      <tbody>{% for i in b.items %}<tr><td><span class="swatch" style="background:{{ i.listing.crop.swatch }}"></span>{{ i.listing.crop|cname:lang }} <span class="stamp {{ i.grade }}" style="width:22px;height:22px;font-size:.8rem">{{ i.grade }}</span></td><td>{{ i.listing.farmer.display_name }}<span class="sub">{{ i.listing.village }}</span></td><td class="n">{{ i.quantity_kg|kg:1 }}</td><td class="n">{{ i.price_per_kg|inr:2 }}</td><td class="n">{{ i.line_total|inr:2 }}</td></tr>{% endfor %}</tbody></table></section>
+    <section class="slip"><h3>Delivery</h3>
+      <dl class="kv"><dt>Truck</dt><dd>{{ order.slot.route }}, {{ order.slot.dispatch_date|date:"D j M" }}</dd><dt>Address</dt><dd>{{ order.address }}</dd>{% if order.note %}<dt>Note</dt><dd>{{ order.note }}</dd>{% endif %}</dl>
+      {% if not b.locked %}<p class="small muted" style="margin:14px 0 0">Delivery is {{ b.logistics_per_kg|inr:2 }}/kg today. It can still fall as the truck fills, and it is locked when the truck dispatches.</p>{% else %}<p class="small muted" style="margin:14px 0 0">Delivery rate locked at dispatch.</p>{% endif %}</section>
+  </div>
+  <section class="slip torn"><h3>Where your rupee went</h3>{% with s=b %}{% include "market/_split.html" %}{% endwith %}</section>
+</div>
+{% endif %}
+{% endblock %}

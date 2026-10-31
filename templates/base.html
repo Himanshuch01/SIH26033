@@ -1,0 +1,43 @@
+{% load static ledger %}<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}KhetKhata{% endblock %} - KhetKhata</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hind:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Gurmukhi:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<script src="{% static 'js/htmx.min.js' %}" defer></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<header class="top"><div class="wrap">
+  <a class="brand" href="{% url 'core:home' %}"><span class="kk"></span>KhetKhata <small>खेत खाता</small></a>
+  <nav class="main" aria-label="Main">
+    {% url 'market:listing_list' as u1 %}{% url 'market:requirement_list' as u2 %}{% url 'logistics:board' as u3 %}{% url 'pricing:insights' as u4 %}{% url 'market:dashboard' as u5 %}
+    <a href="{{ u1 }}" {% if request.path == u1 %}class="on"{% endif %}>{{ t.nav_market }}</a>
+    <a href="{{ u2 }}" {% if u2 in request.path %}class="on"{% endif %}>{{ t.nav_requirements }}</a>
+    <a href="{{ u3 }}" {% if u3 in request.path %}class="on"{% endif %}>{{ t.nav_trucks }}</a>
+    <a href="{{ u4 }}" {% if u4 in request.path %}class="on"{% endif %}>{{ t.nav_prices }}</a>
+    {% if user.is_authenticated %}<a href="{{ u5 }}" {% if request.path == u5 %}class="on"{% endif %}>{{ t.nav_dashboard }}</a>{% endif %}
+  </nav>
+  <div class="tools">
+    <span class="lang" aria-label="Language">{% for code, label in LANGS %}<a href="{% url 'core:set_lang' code %}?next={{ request.get_full_path|urlencode }}" {% if code == lang %}class="on" aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}</span>
+    {% if user.is_authenticated %}
+      {% if user.is_buyer %}<a href="{% url 'market:cart' %}">{{ t.nav_cart }}<span class="cartchip">{{ cart_count }}</span></a>{% endif %}
+      <form method="post" action="{% url 'accounts:logout' %}" style="display:inline">{% csrf_token %}<button class="linkbtn" type="submit">{{ t.logout }} ({{ user.username }})</button></form>
+    {% else %}
+      <a href="{% url 'accounts:login' %}">{{ t.login }}</a>
+      <a class="btn sm" href="{% url 'accounts:register' %}">{{ t.register }}</a>
+    {% endif %}
+  </div>
+</div></header>
+<main><div class="wrap">
+  {% if messages %}<ul class="msgs" role="status">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+  {% block content %}{% endblock %}
+</div></main>
+<footer><div class="wrap">
+  <span>KhetKhata is a college Django project built around SIH26033: fewer middlemen, honest prices, shared trucks.</span>
+  <span>Mandi prices shown are sample data unless imported from Agmarknet.</span>
+</div></footer>
+</body>
+</html>

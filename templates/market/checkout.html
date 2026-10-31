@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>Choose a truck</h1></div>
+<div class="cols two">
+  <form method="post" class="slip form">{% csrf_token %}
+    {{ form.non_field_errors }}
+    <p>{{ form.slot.errors }}<label for="{{ form.slot.id_for_label }}">{{ form.slot.label }}</label>{{ form.slot }}</p>
+    <div id="slot-preview" aria-live="polite"></div>
+    <p>{{ form.address.errors }}<label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>{{ form.address }}</p>
+    <p>{{ form.note.errors }}<label for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>{{ form.note }}</p>
+    <button class="btn" type="submit">Place order</button>
+  </form>
+  <aside class="slip torn"><h3>Your basket</h3>
+    <div class="receipt">{% for x in lines %}<div class="line"><span>{{ x.listing.crop }} ({{ x.qty|kg:1 }})</span><span>{{ x.amount|inr:2 }}</span></div>{% endfor %}
+    <div class="line total"><span>Produce</span><span>{{ subtotal|inr:2 }}</span></div></div>
+    <p class="small muted" style="margin-top:12px">The receipt after ordering shows the full split, including the delivery share for your truck.</p>
+  </aside>
+</div>
+{% endblock %}

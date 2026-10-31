@@ -1,0 +1,8 @@
+{% load ledger %}
+{% if slot %}
+<div class="slip" style="padding:12px 14px;margin-bottom:16px">
+  <div class="meter" aria-hidden="true">{% for c in slot.cells %}<i class="{{ c }}"></i>{% endfor %}</div>
+  <p class="small" style="margin:0">Green is your {{ extra|kg }}. Delivery is <strong class="num">{{ with_cost|inr:2 }}</strong>/kg with your order{% if with_cost < now_cost %}, down from {{ now_cost|inr:2 }}/kg{% endif %}. Full truck: {{ slot.full_truck_cost_per_kg|inr:2 }}/kg.</p>
+  {% if not fits %}<p class="small over" style="margin:6px 0 0"><strong>Not enough space:</strong> only {{ slot.kg_left|kg }} left on this truck.</p>{% endif %}
+</div>
+{% endif %}

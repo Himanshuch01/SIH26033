@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="cols even"><div class="slip">
+  <h1 style="font-size:2rem">Log in</h1>
+  <form method="post" class="form">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="next" value="{{ request.GET.next }}">
+    <button class="btn" type="submit">Log in</button>
+  </form>
+  <p class="small muted" style="margin-top:18px">New here? <a href="{% url 'accounts:register' %}">Create an account</a>.</p>
+</div>
+<div class="slip">
+  <h3>Demo accounts</h3>
+  <p class="small">Password for all: <span class="mono">demo123</span></p>
+  <dl class="kv small"><dt>Farmers</dt><dd class="mono">gurpreet, harjinder, balwinder, jaswant, manpreet, sukhdev</dd>
+  <dt>Buyers</dt><dd class="mono">sai_mess, langar_seva, rasoi, greenbasket</dd></dl>
+</div></div>
+{% endblock %}

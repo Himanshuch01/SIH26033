@@ -1,0 +1,26 @@
+{% load ledger %}
+<div class="legend">
+  <span><i style="background:var(--farmer)"></i>{{ t.farmer_gets }}</span>
+  <span><i style="background:var(--fee)"></i>{{ t.platform_fee }}</span>
+  <span><i style="background:var(--truck)"></i>{{ t.shared_truck }}</span>
+</div>
+<div class="splitbar" role="img" aria-label="Of every rupee you pay, {{ s.farmer_pct|floatformat:0 }} paise reach the farmer">
+  <span class="farmer" style="width:{{ s.farmer_pct|stringformat:'.2f' }}%"></span>
+  <span class="fee" style="width:{{ s.fee_pct|stringformat:'.2f' }}%"></span>
+  <span class="truck" style="width:{{ s.logistics_pct|stringformat:'.2f' }}%"></span>
+</div>
+<p class="small muted" style="margin-bottom:14px">Of every ₹100 you pay, <strong>₹{{ s.farmer_pct|floatformat:0 }}</strong> goes to the farmer.</p>
+<div class="receipt">
+  <div class="line"><span>{{ t.farmer_gets }} ({{ s.kg|kg }})</span><span>{{ s.farmer|inr:2 }}</span></div>
+  <div class="line"><span>{{ t.platform_fee }} ({{ s.fee_rate }}%)</span><span>{{ s.fee|inr:2 }}</span></div>
+  <div class="line"><span>{{ t.shared_truck }} ({{ s.logistics_per_kg|inr:2 }}/kg)</span><span>{{ s.logistics|inr:2 }}</span></div>
+  <div class="line total"><span>{{ t.you_pay }}</span><span>{{ s.total|inr:2 }}</span></div>
+  {% if s.typical %}
+  <div class="line"><span>{{ t.typical_chain }}</span><span>{{ s.typical|inr:2 }}</span></div>
+  <div class="line save"><span>{{ t.you_save }}</span><span>{{ s.saving|inr:2 }} ({{ s.saving_pct|floatformat:0 }}%)</span></div>
+  {% endif %}
+</div>
+{% if s.typical %}
+<p class="small muted" style="margin:14px 0 4px">The usual chain (farmer, trader, commission agent, wholesaler, retailer) lets about <strong>₹{{ s.chain_farmer_pct|floatformat:0 }}</strong> of ₹100 reach the farmer, at best:</p>
+<div class="splitbar" role="img" aria-label="Typical chain"><span class="farmer" style="width:{{ s.chain_farmer_pct|stringformat:'.2f' }}%"></span><span class="mid" style="flex:1"></span></div>
+{% endif %}

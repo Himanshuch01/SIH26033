@@ -1,0 +1,9 @@
+{% load ledger %}
+<div class="truck" {% if poll %}hx-get="{% url 'logistics:meter' slot.pk %}" hx-trigger="every 15s" hx-swap="outerHTML"{% endif %}>
+  <div class="row"><span class="route">{{ slot.route }}</span><span class="muted">{{ slot.dispatch_date|date:"D j M" }}</span></div>
+  <div class="meter" role="img" aria-label="Truck {{ slot.fill_pct|floatformat:0 }} percent full">{% for c in slot.cells %}<i class="{{ c }}"></i>{% endfor %}</div>
+  <div class="row small">
+    <span><strong class="num">{{ slot.filled_kg|kg }}</strong> of {{ slot.capacity_kg }} kg booked</span>
+    <span>now <strong class="num">{{ slot.cost_per_kg|inr:2 }}</strong>/kg, full truck <strong class="num">{{ slot.full_truck_cost_per_kg|inr:2 }}</strong>/kg</span>
+  </div>
+</div>

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Post a requirement{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>Post a requirement</h1></div>
+<div class="slip form" style="max-width:640px"><p class="muted">Tell farmers what you need every week. They bid with a quantity and a price, and you accept the ones you like.</p>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit">Put it on the board</button></form></div>
+{% endblock %}

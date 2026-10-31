@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}{{ object.crop }} from {{ object.village }}{% endblock %}
+{% block content %}
+{% with l=object %}
+<div class="pagehead"><div><h1>{{ l.crop|cname:lang }}{% if l.variety %}, {{ l.variety }}{% endif %}</h1>
+  <p class="muted" style="margin:6px 0 0">{{ l.farmer.display_name }}, {{ l.village }}, {{ l.district }}. Harvested {{ l.harvest_date|date:"j M" }}.</p></div>
+  {% if user == l.farmer %}<a class="btn alt" href="{% url 'market:listing_update' l.pk %}">Edit listing</a>{% endif %}</div>
+<div class="cols two">
+  <div class="stack">
+    <section class="slip">
+      <div class="cols even" style="align-items:start">
+        {% if l.photo %}<img class="photo" src="{{ l.photo.url }}" alt="{{ l.crop }} from {{ l.village }}">{% else %}<div class="photo-ph" style="background:{{ l.crop.swatch }}">{{ l.crop.name|slice:":1" }}</div>{% endif %}
+        <div>
+          <div class="btnrow" style="margin-bottom:14px"><span class="stamp lg {{ l.grade }}">{{ l.grade }}</span><span class="small muted">Grade {{ l.grade }}<br>from the 3-point checklist</span></div>
+          <dl class="kv small">
+            <dt>Freshness</dt><dd>{{ l.get_freshness_display }}</dd>
+            <dt>Size uniformity</dt><dd>{{ l.get_uniformity_display }}</dd>
+            <dt>Clean of damage</dt><dd>{{ l.get_blemish_display }}</dd>
+            <dt>Stock</dt><dd class="num">{{ l.quantity_kg|kg:1 }}</dd>
+            <dt>Minimum order</dt><dd class="num">{{ l.min_order_kg|kg }}</dd>
+          </dl>
+        </div>
+      </div>
+      {% if l.description %}<p style="margin:18px 0 0">{{ l.description }}</p>{% endif %}
+    </section>
+    {% if fc %}
+    <section class="slip">
+      <h2>{{ l.crop|cname:lang }} prices, next few weeks</h2>
+      <div class="advice {{ fc.advice }}"><h3>{{ fc.headline }}</h3><span class="small">{{ fc.reasons.0 }}</span></div>
+      <p class="small"><a href="{% url 'pricing:insights' %}?crop={{ l.crop_id }}">Open the full price chart</a></p>
+    </section>
+    {% endif %}
+  </div>
+  <aside class="stack">
+    <section class="slip">
+      <div class="btnrow" style="justify-content:space-between;align-items:baseline"><h2 style="margin:0">{{ l.price_per_kg|inr:2 }}<span class="small muted"> / kg</span></h2></div>
+      {% if l.fair_kg %}<p class="small muted" style="margin:4px 0 14px">Fair band for Grade {{ l.grade }} today: <strong class="num">{{ l.fair_kg|inr:2 }}</strong>/kg (mandi {{ l.mandi_kg|inr:2 }} × {{ l.grade_multiplier }}).</p>{% endif %}
+      {% if user.is_authenticated and user.is_buyer %}
+        <form method="post" action="{% url 'market:cart_add' l.pk %}" class="qty">{% csrf_token %}
+          <label for="qty" class="small">Kilograms</label><input id="qty" type="number" name="qty" min="{{ l.min_order_kg }}" max="{{ l.quantity_kg }}" step="0.5" value="{{ kg }}">
+          <button class="btn" type="submit">{{ t.add_to_cart }}</button>
+        </form>
+      {% elif not user.is_authenticated %}<a class="btn" href="{% url 'accounts:login' %}?next={{ request.path }}">{{ t.login }} to order</a>
+      {% elif user.is_farmer and user != l.farmer %}<p class="small muted">You're signed in as a farmer. Buyers order from this page.</p>{% endif %}
+    </section>
+    {% if split %}
+    <section class="slip torn">
+      <h3>Where your rupee goes</h3>
+      <form method="get" class="qty small" style="margin-bottom:10px"><label for="kg">For</label><input id="kg" type="number" name="kg" value="{{ kg }}" min="1" max="{{ l.quantity_kg }}" step="0.5"> kg <button class="btn alt sm" type="submit">Update</button></form>
+      {% with s=split %}{% include "market/_split.html" %}{% endwith %}
+      {% if split.slot %}<p class="small muted" style="margin-top:12px">Freight uses the next open truck: {{ split.slot.route }}, {{ split.slot.dispatch_date|date:"D j M" }}.</p>{% endif %}
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endwith %}
+{% endblock %}

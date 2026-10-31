@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit listing{% else %}List produce{% endif %}{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>{% if editing %}Edit {{ obj.crop }}{% else %}List your produce{% endif %}</h1></div>
+<div class="cols two">
+<form method="post" enctype="multipart/form-data" class="slip form">{% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">{% if editing %}Save changes{% else %}Publish listing{% endif %}</button>
+</form>
+<aside class="stack">
+  <div class="slip"><h3>Today's mandi rate</h3><div id="price-hint" class="small muted">Pick a crop to see today's rate and the fair price for each grade.</div></div>
+  <div class="slip"><h3>How the grade is set</h3>
+    <p class="small">Score freshness, size and cleanliness from Poor to Good. Total 8 or 9 is Grade A, 6 or 7 is Grade B, and anything lower is Grade C. Buyers see the grade stamp, and the fair price band moves with it: A is mandi + 10%, B is mandi, C is mandi - 12%.</p></div>
+</aside>
+</div>
+{% endblock %}

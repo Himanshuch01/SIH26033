@@ -1,0 +1,54 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}Farm to buyer, direct{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>{{ t.tagline }}</h1>
+    <p class="lead">Farmers and FPOs list produce with a transparent grade. Messes, kitchens and families buy straight from them. Orders to the same area share one truck, so delivery gets cheaper as the truck fills.</p>
+    <div class="btnrow">
+      <a class="btn" href="{% url 'market:listing_list' %}">{{ t.nav_market }}</a>
+      {% if user.is_authenticated and user.is_farmer %}<a class="btn alt" href="{% url 'market:listing_create' %}">{{ t.sell_produce }}</a>
+      {% elif user.is_authenticated %}<a class="btn alt" href="{% url 'market:requirement_create' %}">{{ t.post_need }}</a>
+      {% else %}<a class="btn alt" href="{% url 'accounts:register' %}">{{ t.register }}</a>{% endif %}
+    </div>
+    <p class="small muted" style="margin-top:22px">{{ farmer_count }} farmers and FPOs, {{ listing_count }} live listings in this demo</p>
+  </div>
+  {% if sample %}
+  <div class="slip torn">
+    <h3>Where did the rupee go?</h3>
+    <p class="small muted">A real basket from this market: 10 kg {{ sample.crop }}, Grade {{ sample.grade }}, from {{ sample.farmer.display_name }}, {{ sample.village }}.</p>
+    {% with s=sample_split %}{% include "market/_split.html" %}{% endwith %}
+  </div>
+  {% endif %}
+</section>
+
+<div class="cols two">
+  <section class="slip tight">
+    <div class="head"><h2>{{ t.fresh_listings }}</h2><a href="{% url 'market:listing_list' %}">See all listings</a></div>
+    <div class="scroll"><table class="ledger">
+      <thead><tr><th>{{ t.crop }}</th><th>{{ t.grade }}</th><th class="r">{{ t.price }}</th><th class="r">{{ t.mandi }}</th><th>{{ t.trend }}</th></tr></thead>
+      <tbody>{% for l in listings %}
+        <tr><td><a class="who" href="{{ l.get_absolute_url }}"><span class="swatch" style="background:{{ l.crop.swatch }}"></span>{{ l.crop|cname:lang }}</a><span class="sub">{{ l.farmer.display_name }}, {{ l.village }}</span></td>
+        <td><span class="stamp {{ l.grade }}">{{ l.grade }}</span></td>
+        <td class="n">{{ l.price_per_kg|inr:2 }}</td><td class="n muted">{{ l.mandi_kg|inr:2 }}</td>
+        <td>{% sparkline l.trend %}</td></tr>
+      {% empty %}<tr><td colspan="5" class="empty">No listings yet. Farmers can add the first one.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  <aside class="stack">
+    <section class="slip tight">
+      <div class="head"><h2>{{ t.trucks_filling }}</h2><a href="{% url 'logistics:board' %}">All trucks</a></div>
+      {% for slot in slots %}{% include "logistics/_meter.html" %}{% empty %}<p class="empty">No trucks scheduled.</p>{% endfor %}
+    </section>
+    <section class="slip">
+      <h2>How an order works</h2>
+      <ol class="steps">
+        <li><span><strong>Farmer lists produce.</strong> Three quick checks set the grade, and the grade sets a fair price band against today's mandi rate.</span></li>
+        <li><span><strong>Buyer picks a truck.</strong> The cost per kg updates with your kilograms added.</span></li>
+        <li><span><strong>The truck dispatches.</strong> The delivery cost per kg is locked for everyone on it.</span></li>
+        <li><span><strong>Every receipt shows the split.</strong> Farmer share, fee and freight, next to the usual chain.</span></li>
+      </ol>
+    </section>
+  </aside>
+</div>
+{% endblock %}

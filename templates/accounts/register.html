@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<div class="slip" style="max-width:640px">
+  <h1 style="font-size:2rem">Create your account</h1>
+  <p class="muted">Farmers and FPOs can list produce. Buyers can order, and post standing requirements for farmers to bid on.</p>
+  <form method="post" class="form">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit">Create account</button></form>
+</div>
+{% endblock %}

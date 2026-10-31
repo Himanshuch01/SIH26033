@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}My desk{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ user.display_name }}</h1><p class="muted" style="margin:6px 0 0">{{ user.village }}</p></div><div class="btnrow"><a class="btn" href="{% url 'market:listing_list' %}">{{ t.nav_market }}</a><a class="btn alt" href="{% url 'market:requirement_create' %}">{{ t.post_need }}</a></div></div>
+<div class="cols even">
+  <section class="slip tight"><div class="head"><h2>Recent orders</h2><a href="{% url 'market:order_list' %}">All orders</a></div>
+    <table class="ledger"><tbody>{% for o in orders %}<tr><td><a class="who" href="{{ o.get_absolute_url }}">#{{ o.pk }}</a><span class="sub">{{ o.slot.route }}</span></td><td>{{ o.created_at|date:"j M" }}</td><td><span class="pill {{ o.status }}">{{ o.get_status_display }}</span></td></tr>
+    {% empty %}<tr><td class="empty">No orders yet. <a href="{% url 'market:listing_list' %}">Browse the market</a>.</td></tr>{% endfor %}</tbody></table></section>
+  <section class="slip tight"><div class="head"><h2>My requirements</h2></div>
+    {% for r in reqs %}<div class="truck"><div class="row"><a class="route" href="{{ r.get_absolute_url }}">{{ r.crop }}, {{ r.quantity_kg_per_week|kg }}/week</a><span class="pill {{ r.status }}">{{ r.get_status_display }}</span></div>
+      <div class="bar"><span style="width:{{ r.committed_pct|stringformat:'.0f' }}%"></span></div><div class="small muted">{{ r.committed_kg|kg }} committed, {{ r.n_bids }} bid{{ r.n_bids|pluralize }}</div></div>
+    {% empty %}<p class="empty">Need the same produce every week? Post a requirement and farmers will bid.</p>{% endfor %}</section>
+</div>
+{% endblock %}

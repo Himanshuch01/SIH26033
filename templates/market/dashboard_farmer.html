@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}My desk{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ user.display_name }}</h1><p class="muted" style="margin:6px 0 0">{{ user.village }}{% if user.district %}, {{ user.district }}{% endif %}</p></div><a class="btn" href="{% url 'market:listing_create' %}">{{ t.sell_produce }}</a></div>
+<section class="slip" style="margin-bottom:24px"><dl class="kv" style="grid-template-columns:repeat(3,auto);gap:4px 40px;justify-content:start">
+  <dt>Earned from orders</dt><dt>Sold</dt><dt>Live stock value</dt>
+  <dd class="num" style="font-size:1.4rem">{{ earned|inr }}</dd><dd class="num" style="font-size:1.4rem">{{ kg_sold|kg }}</dd><dd class="num" style="font-size:1.4rem">{{ stock_value|inr }}</dd></dl></section>
+<div class="cols two">
+  <div class="stack">
+    <section class="slip tight"><div class="head"><h2>My listings</h2></div><div class="scroll">
+      <table class="ledger"><thead><tr><th>{{ t.crop }}</th><th>{{ t.grade }}</th><th class="r">{{ t.qty }}</th><th class="r">{{ t.price }}</th><th class="r">Fair band</th><th></th></tr></thead>
+      <tbody>{% for l in listings %}<tr><td><a class="who" href="{{ l.get_absolute_url }}">{{ l.crop|cname:lang }}</a>{% if not l.is_active %}<span class="sub">hidden</span>{% endif %}</td><td><span class="stamp {{ l.grade }}">{{ l.grade }}</span></td><td class="n">{{ l.quantity_kg|kg }}</td><td class="n">{{ l.price_per_kg|inr:2 }}</td><td class="n muted">{{ l.fair_kg|inr:2 }}</td><td><a href="{% url 'market:listing_update' l.pk %}">Edit</a></td></tr>
+      {% empty %}<tr><td colspan="6" class="empty">You haven't listed anything yet. <a href="{% url 'market:listing_create' %}">List your first crop</a>.</td></tr>{% endfor %}</tbody></table></div></section>
+    <section class="slip tight"><div class="head"><h2>Recent orders</h2><a href="{% url 'market:order_list' %}">All orders</a></div><div class="scroll">
+      <table class="ledger"><tbody>{% for i in items %}<tr><td><a href="{% url 'market:order_detail' i.order.pk %}">#{{ i.order.pk }}</a></td><td>{{ i.listing.crop }}, {{ i.quantity_kg|kg }}</td><td>{{ i.order.buyer.display_name }}</td><td class="n">{{ i.line_total|inr:2 }}</td><td><span class="pill {{ i.order.status }}">{{ i.order.get_status_display }}</span></td></tr>
+      {% empty %}<tr><td class="empty">No orders yet.</td></tr>{% endfor %}</tbody></table></div></section>
+  </div>
+  <aside class="stack">
+    <section class="slip tight"><div class="head"><h3>Buyers who need your crops</h3></div>
+      {% for r in open_reqs %}<div class="truck"><a class="route" href="{{ r.get_absolute_url }}">{{ r.crop }}, {{ r.quantity_kg_per_week|kg }}/week</a><div class="small muted">{{ r.buyer.display_name }}, {{ r.town }}{% if r.max_price_per_kg %}, up to {{ r.max_price_per_kg|inr:2 }}/kg{% endif %}</div></div>
+      {% empty %}<p class="empty">No open requirements match your listings.</p>{% endfor %}</section>
+    <section class="slip tight"><div class="head"><h3>My bids</h3></div>
+      {% for b in bids %}<div class="truck"><a href="{{ b.requirement.get_absolute_url }}">{{ b.requirement.crop }} for {{ b.requirement.buyer.display_name }}</a> <span class="pill {{ b.status }}">{{ b.get_status_display }}</span><div class="small muted">{{ b.quantity_kg_per_week|kg }}/week at {{ b.price_per_kg|inr:2 }}/kg</div></div>
+      {% empty %}<p class="empty">You haven't bid on anything yet.</p>{% endfor %}</section>
+  </aside>
+</div>
+{% endblock %}

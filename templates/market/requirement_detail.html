@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}{{ req.crop }} requirement{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ req.crop|cname:lang }}, {{ req.quantity_kg_per_week|kg }} a week</h1><p class="muted" style="margin:6px 0 0">{{ req.buyer.display_name }}, {{ req.town }}. <span class="pill {{ req.status }}">{{ req.get_status_display }}</span></p></div></div>
+<div class="cols two">
+  <div class="stack">
+    <section class="slip"><dl class="kv"><dt>Duration</dt><dd>{{ req.weeks }} weeks</dd><dt>Quality</dt><dd>{{ req.get_min_grade_display }}</dd><dt>Highest price</dt><dd class="num">{{ req.max_price_per_kg|inr:2 }}/kg</dd>{% if req.note %}<dt>Note</dt><dd>{{ req.note }}</dd>{% endif %}</dl>
+      <div class="bar" style="margin-top:16px"><span style="width:{{ req.committed_pct|stringformat:'.0f' }}%"></span></div><p class="small muted" style="margin:0">{{ req.committed_kg|kg }} committed, {{ req.remaining_kg|kg }} still open</p></section>
+    <section class="slip tight"><div class="head"><h2>Bids, lowest price first</h2></div>
+      <table class="ledger"><tbody>{% for b in bids %}<tr><td class="who">{{ b.farmer.display_name }}<span class="sub">{{ b.farmer.village }}{% if b.listing %}, Grade {{ b.listing.grade }}{% endif %}{% if b.note %}. {{ b.note }}{% endif %}</span></td><td class="n">{{ b.quantity_kg_per_week|kg }}/wk</td><td class="n">{{ b.price_per_kg|inr:2 }}</td>
+      <td><span class="pill {{ b.status }}">{{ b.get_status_display }}</span>{% if is_owner and b.status == "pending" %}
+        <form method="post" action="{% url 'market:bid_decide' b.pk 'accept' %}" style="display:inline">{% csrf_token %}<button class="btn sm" type="submit">Accept</button></form>
+        <form method="post" action="{% url 'market:bid_decide' b.pk 'reject' %}" style="display:inline">{% csrf_token %}<button class="linkbtn small" type="submit">Decline</button></form>{% endif %}</td></tr>
+      {% empty %}<tr><td class="empty">No bids yet.</td></tr>{% endfor %}</tbody></table></section>
+  </div>
+  <aside>
+    {% if form %}<section class="slip"><h3>Place your bid</h3><form method="post" class="form">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit">Submit bid</button></form></section>
+    {% elif my_bid %}<section class="slip"><h3>Your bid</h3><p>{{ my_bid.quantity_kg_per_week|kg }} a week at {{ my_bid.price_per_kg|inr:2 }}/kg. <span class="pill {{ my_bid.status }}">{{ my_bid.get_status_display }}</span></p></section>
+    {% elif not user.is_authenticated %}<section class="slip"><p><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in as a farmer</a> to bid on this requirement.</p></section>{% endif %}
+  </aside>
+</div>
+{% endblock %}

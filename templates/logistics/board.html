@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Trucks{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>Shared trucks</h1><p class="muted" style="margin:6px 0 0;max-width:46em">Orders on the same route share one vehicle. The fixed trip cost is split over every kilogram, so more kilograms mean a lower rate for everyone.</p></div></div>
+<div class="slip tight">
+  {% for slot in slots %}{% include "logistics/_meter.html" with poll=True %}{% empty %}<p class="empty">No open trucks right now. The admin can schedule one.</p>{% endfor %}
+</div>
+{% endblock %}

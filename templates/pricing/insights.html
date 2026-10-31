@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}Mandi prices{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ t.nav_prices }}</h1><p class="muted" style="margin:6px 0 0">Weekly modal prices in ₹ per quintal, and a seasonal forecast you can read.</p></div>
+  <form method="get" class="filters" style="border:0;padding:0"><div><label for="crop">{{ t.crop }}</label><select id="crop" name="crop" onchange="this.form.submit()">{% for c in crops %}<option value="{{ c.pk }}" {% if c == crop %}selected{% endif %}>{{ c|cname:lang }}</option>{% endfor %}</select></div><noscript><div class="fit"><button class="btn sm">Show</button></div></noscript></form></div>
+{% if fc %}
+<div class="cols two">
+  <section class="slip">
+    <div class="advice {{ fc.advice }}"><h3>{{ fc.headline }}</h3><span>{{ fc.reasons.0 }}</span></div>
+    {% price_chart fc.history fc.forecast %}
+    <p class="small muted">Solid line: last 52 weeks. Dashed green: next 6 weeks. Prices in ₹/quintal.</p>
+  </section>
+  <aside class="stack">
+    <section class="slip">
+      <h3>Why this advice</h3>
+      <ul style="padding-left:18px;margin:0">{% for r in fc.reasons %}<li class="small" style="margin-bottom:8px">{{ r }}</li>{% endfor %}</ul>
+    </section>
+    <section class="slip"><h3>Typical month, vs average</h3>
+      <div class="season" style="margin-bottom:26px">{% for m, v in fc.season %}<div class="{% if m == fc.best_month %}hi{% elif m == fc.low_month %}lo{% endif %}" style="height:{{ v }}%" title="{{ m }}: {{ v }}"><span>{{ m|slice:":1" }}</span></div>{% endfor %}</div>
+      <p class="small muted" style="margin:0">Green is the best month to sell, red the weakest. Built from {{ fc.n_weeks }} weeks of data. It is a pattern, not a promise.</p>
+    </section>
+  </aside>
+</div>
+<section class="slip tight" style="margin-top:24px"><div class="head"><h2>Latest by mandi</h2></div>
+  <table class="ledger"><thead><tr><th>Market</th><th>Date</th><th class="r">₹ / quintal</th></tr></thead>
+  <tbody>{% for m in markets %}<tr><td>{{ m.market }}</td><td>{{ m.date|date:"j M" }}</td><td class="n">{{ m.modal_price|inr }}</td></tr>{% endfor %}</tbody></table></section>
+{% else %}<div class="slip empty">No price history yet. Run <span class="mono">python manage.py seed_demo</span> or import Agmarknet data with <span class="mono">import_prices</span>.</div>{% endif %}
+{% endblock %}

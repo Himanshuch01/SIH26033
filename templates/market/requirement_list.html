@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}Requirement board{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>{{ t.nav_requirements }}</h1><p class="muted" style="margin:6px 0 0;max-width:46em">Messes, kitchens and shops post what they need every week. Farmers and FPOs bid, and several farmers can split one requirement.</p></div>
+  {% if user.is_authenticated and user.is_buyer %}<a class="btn" href="{% url 'market:requirement_create' %}">{{ t.post_need }}</a>{% endif %}</div>
+<div class="slip tight">
+  <form method="get" class="filters"><div><label for="crop">{{ t.crop }}</label><select id="crop" name="crop"><option value="">All crops</option>{% for c in crops %}<option value="{{ c.pk }}" {% if f.crop == c.pk|stringformat:"s" %}selected{% endif %}>{{ c|cname:lang }}</option>{% endfor %}</select></div><div class="fit"><button class="btn sm" type="submit">Filter</button></div></form>
+  <div class="scroll"><table class="ledger"><thead><tr><th>Needs</th><th>Buyer</th><th class="r">Per week</th><th class="r">Up to</th><th>Filled</th><th class="r">Bids</th></tr></thead>
+  <tbody>{% for r in reqs %}<tr><td><a class="who" href="{{ r.get_absolute_url }}"><span class="swatch" style="background:{{ r.crop.swatch }}"></span>{{ r.crop|cname:lang }}</a><span class="sub">Grade {{ r.min_grade }}{% if r.min_grade != "C" %}+{% endif %}, {{ r.weeks }} weeks</span></td><td>{{ r.buyer.display_name }}<span class="sub">{{ r.town }}</span></td><td class="n">{{ r.quantity_kg_per_week|kg }}</td><td class="n">{{ r.max_price_per_kg|inr:2 }}</td><td style="min-width:110px"><div class="bar"><span style="width:{{ r.committed_pct|stringformat:'.0f' }}%"></span></div></td><td class="n">{{ r.n_bids }}</td></tr>
+  {% empty %}<tr><td colspan="6" class="empty">No open requirements. Buyers can post one and farmers will see it here.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

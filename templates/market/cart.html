@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% load ledger %}
+{% block title %}Cart{% endblock %}
+{% block content %}
+<div class="pagehead"><h1>{{ t.nav_cart }}</h1></div>
+{% if lines %}
+<div class="slip tight">
+  <table class="ledger"><thead><tr><th>{{ t.crop }}</th><th>{{ t.farmer }}</th><th class="r">Kilograms</th><th class="r">{{ t.price }}</th><th class="r">Amount</th><th></th></tr></thead>
+  <tbody>{% for x in lines %}<tr>
+    <td><a class="who" href="{{ x.listing.get_absolute_url }}"><span class="swatch" style="background:{{ x.listing.crop.swatch }}"></span>{{ x.listing.crop|cname:lang }}</a> <span class="stamp {{ x.listing.grade }}" style="width:22px;height:22px;font-size:.8rem">{{ x.listing.grade }}</span></td>
+    <td>{{ x.listing.farmer.display_name }}</td><td class="n">{{ x.qty|kg:1 }}</td><td class="n">{{ x.listing.price_per_kg|inr:2 }}</td><td class="n">{{ x.amount|inr:2 }}</td>
+    <td><form method="post" action="{% url 'market:cart_remove' x.listing.pk %}">{% csrf_token %}<button class="linkbtn small" type="submit">Remove</button></form></td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td colspan="2"><strong>Produce total</strong></td><td class="n"><strong>{{ total_kg|kg:1 }}</strong></td><td></td><td class="n"><strong>{{ subtotal|inr:2 }}</strong></td><td></td></tr></tfoot></table>
+</div>
+<p class="small muted" style="margin:12px 0 18px">Platform fee and delivery are added at checkout, once you pick a truck.</p>
+<div class="btnrow"><a class="btn" href="{% url 'market:checkout' %}">Choose a truck and pay</a><a href="{% url 'market:listing_list' %}">Keep shopping</a></div>
+{% else %}<div class="slip empty">Your cart is empty. <a href="{% url 'market:listing_list' %}">Browse the market</a> or <a href="{% url 'market:requirement_create' %}">post a standing requirement</a>.</div>{% endif %}
+{% endblock %}

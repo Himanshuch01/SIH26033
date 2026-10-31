@@ -1,0 +1,7 @@
+{% load ledger %}
+{% if per_kg %}
+<p style="margin:0 0 8px"><strong class="num">{{ quintal|inr }}</strong> per quintal, which is <strong class="num">{{ per_kg|inr:2 }}</strong> per kg for {{ crop }}.</p>
+<table class="ledger small"><thead><tr><th>Grade</th><th class="r">Fair price / kg</th></tr></thead>
+<tbody>{% for g, p in bands %}<tr><td><span class="stamp {{ g }}">{{ g }}</span></td><td class="n">{{ p|inr:2 }}</td></tr>{% endfor %}</tbody></table>
+{% elif crop %}<p style="margin:0">No mandi price on file for {{ crop }} yet.</p>
+{% else %}Pick a crop to see today's rate.{% endif %}
