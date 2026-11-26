@@ -1,4 +1,4 @@
-# KhetKhata (खेत खाता)
+# Fasal Bazaar (फ़सल बाज़ार)
 
 A Django marketplace for **SIH26033**: farmers and FPOs sell directly to consumers and bulk buyers,
 with explainable price forecasting, transparent quality grading, and pooled (shared-truck) logistics.

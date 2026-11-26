@@ -1,4 +1,4 @@
-"""Django settings for KhetKhata (SIH26033 farm-to-buyer marketplace)."""
+"""Django settings for Fasal Bazaar (SIH26033 farm-to-buyer marketplace)."""
 import os
 from decimal import Decimal
 from pathlib import Path
@@ -33,7 +33,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "khetkhata.urls"
+ROOT_URLCONF = "fasalbazaar.urls"
 
 TEMPLATES = [
     {
@@ -51,7 +51,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "khetkhata.wsgi.application"
+WSGI_APPLICATION = "fasalbazaar.wsgi.application"
 
 DATABASES = {
     "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}
