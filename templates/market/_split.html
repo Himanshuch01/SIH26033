@@ -1,8 +1,8 @@
 {% load ledger %}
 <div class="legend">
-  <span><i style="background:var(--farmer)"></i>{{ t.farmer_gets }}</span>
-  <span><i style="background:var(--fee)"></i>{{ t.platform_fee }}</span>
-  <span><i style="background:var(--truck)"></i>{{ t.shared_truck }}</span>
+  <span><i class="farmer" style="background:#2b7a4b"></i>{{ t.farmer_gets }}</span>
+  <span><i class="fee" style="background:#4f6275"></i>{{ t.platform_fee }}</span>
+  <span><i class="truck" style="background:#efb300"></i>{{ t.shared_truck }}</span>
 </div>
 <div class="splitbar" role="img" aria-label="Of every rupee you pay, {{ s.farmer_pct|floatformat:0 }} paise reach the farmer">
   <span class="farmer" style="width:{{ s.farmer_pct|stringformat:'.2f' }}%"></span>
@@ -17,7 +17,11 @@
   <div class="line total"><span>{{ t.you_pay }}</span><span>{{ s.total|inr:2 }}</span></div>
   {% if s.typical %}
   <div class="line"><span>{{ t.typical_chain }}</span><span>{{ s.typical|inr:2 }}</span></div>
+  {% if s.saving >= 0 %}
   <div class="line save"><span>{{ t.you_save }}</span><span>{{ s.saving|inr:2 }} ({{ s.saving_pct|floatformat:0 }}%)</span></div>
+  {% else %}
+  <div class="line muted"><span>Costs more than the usual chain today</span></div>
+  {% endif %}
   {% endif %}
 </div>
 {% if s.typical %}

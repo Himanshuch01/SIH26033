@@ -15,7 +15,7 @@ from pricing import services as price_services
 from . import cart as cart_api
 from .forms import AddToCartForm, BidForm, CheckoutForm, ListingForm, RequirementForm
 from .models import Bid, Crop, Listing, Order, OrderItem, Requirement
-from .services import annotate_listings, listing_breakdown, order_breakdown, split
+from .services import annotate_listings, listing_breakdown, order_breakdown
 
 
 def role_required(role):
@@ -221,6 +221,19 @@ def order_cancel(request, pk):
     return redirect(order)
 
 
+@role_required("buyer")
+@require_POST
+def order_delivered(request, pk):
+    order = get_object_or_404(Order, pk=pk, buyer=request.user)
+    if order.status != "dispatched":
+        messages.error(request, "Only dispatched orders can be marked as delivered.")
+        return redirect(order)
+    order.status = "delivered"
+    order.save(update_fields=["status"])
+    messages.success(request, f"Order #{order.pk} marked as delivered.")
+    return redirect(order)
+
+
 # ------------------------------------------------------------------ requirement board
 def requirement_list(request):
     qs = Requirement.objects.filter(status="open").select_related("crop", "buyer").annotate(n_bids=Count("bids"))
@@ -279,6 +292,19 @@ def bid_decide(request, pk, action):
     else:
         bid.status = "rejected"
         bid.save(update_fields=["status"])
+    return redirect(req)
+
+
+@role_required("farmer")
+@require_POST
+def bid_withdraw(request, pk):
+    bid = get_object_or_404(Bid.objects.select_related("requirement"), pk=pk, farmer=request.user)
+    if bid.status != "pending":
+        messages.error(request, "Only pending bids can be withdrawn.")
+        return redirect(bid.requirement)
+    req = bid.requirement
+    bid.delete()
+    messages.success(request, "Your bid has been withdrawn.")
     return redirect(req)
 
 

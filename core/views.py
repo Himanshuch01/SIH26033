@@ -16,7 +16,16 @@ def home(request):
         .select_related("crop", "farmer").order_by("-created_at")[:7]
     )
     annotate_listings(listings)
-    sample = next((l for l in listings if l.mandi_kg), None)
+    sample = None
+    sample_split = None
+    for l in listings:
+        if l.mandi_kg:
+            b = listing_breakdown(l, 10)
+            if b.get("saving") and b["saving"] > 0 and b.get("farmer_pct", 0) >= 70:
+                sample = l
+                sample_split = b
+                break
+
     slots = list(DeliverySlot.objects.open_slots()[:3])
     for s in slots:
         s.cells = s.meter_cells()
@@ -24,7 +33,7 @@ def home(request):
         "listings": listings,
         "slots": slots,
         "sample": sample,
-        "sample_split": listing_breakdown(sample, 10) if sample else None,
+        "sample_split": sample_split,
         "farmer_count": User.objects.filter(role="farmer").count(),
         "listing_count": Listing.objects.filter(is_active=True).count(),
     }

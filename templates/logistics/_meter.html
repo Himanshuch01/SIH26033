@@ -6,4 +6,12 @@
     <span><strong class="num">{{ slot.filled_kg|kg }}</strong> of {{ slot.capacity_kg }} kg booked</span>
     <span>now <strong class="num">{{ slot.cost_per_kg|inr:2 }}</strong>/kg, full truck <strong class="num">{{ slot.full_truck_cost_per_kg|inr:2 }}</strong>/kg</span>
   </div>
+  {% if user.is_staff and slot.status == "open" %}
+  <div style="margin-top:10px">
+    <form method="post" action="{% url 'logistics:dispatch' slot.pk %}">
+      {% csrf_token %}
+      <button class="btn sm" type="submit">Dispatch this truck</button>
+    </form>
+  </div>
+  {% endif %}
 </div>

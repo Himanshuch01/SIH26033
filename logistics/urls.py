@@ -7,4 +7,5 @@ urlpatterns = [
     path("", views.board, name="board"),
     path("meter/<int:pk>/", views.meter, name="meter"),
     path("preview/", views.preview, name="preview"),
+    path("dispatch/<int:pk>/", views.dispatch_slot_view, name="dispatch"),
 ]

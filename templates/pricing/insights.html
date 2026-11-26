@@ -22,7 +22,10 @@
   </aside>
 </div>
 <section class="slip tight" style="margin-top:24px"><div class="head"><h2>Latest by mandi</h2></div>
+  <div class="scroll">
   <table class="ledger"><thead><tr><th>Market</th><th>Date</th><th class="r">₹ / quintal</th></tr></thead>
-  <tbody>{% for m in markets %}<tr><td>{{ m.market }}</td><td>{{ m.date|date:"j M" }}</td><td class="n">{{ m.modal_price|inr }}</td></tr>{% endfor %}</tbody></table></section>
+  <tbody>{% for m in markets %}<tr><td>{{ m.market }}</td><td>{{ m.date|date:"j M" }}</td><td class="n">{{ m.modal_price|inr }}</td></tr>{% endfor %}</tbody></table>
+  </div>
+</section>
 {% else %}<div class="slip empty">No price history yet. Run <span class="mono">python manage.py seed_demo</span> or import Agmarknet data with <span class="mono">import_prices</span>.</div>{% endif %}
 {% endblock %}

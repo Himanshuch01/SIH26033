@@ -82,9 +82,33 @@ class BidForm(forms.ModelForm):
     def __init__(self, *args, requirement=None, farmer=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.requirement = requirement
-        self.fields["listing"].queryset = Listing.objects.filter(farmer=farmer, crop=requirement.crop, is_active=True)
+        allowed = {"A": ["A"], "B": ["A", "B"], "C": ["A", "B", "C"]}.get(
+            requirement.min_grade if requirement else "C", ["A", "B", "C"]
+        )
+        qs = Listing.objects.none()
+        if requirement and farmer:
+            qs = Listing.objects.filter(
+                farmer=farmer, crop=requirement.crop, is_active=True, grade__in=allowed
+            )
+        self.fields["listing"].queryset = qs
         self.fields["listing"].label = "Which of your listings will this come from?"
         self.fields["listing"].required = False
+        if not qs.exists() and requirement:
+            self.fields["listing"].help_text = (
+                f"You have no active Grade {requirement.min_grade} or better listings for {requirement.crop}."
+            )
+
+    def clean_listing(self):
+        listing = self.cleaned_data.get("listing")
+        if listing and self.requirement:
+            allowed = {"A": ["A"], "B": ["A", "B"], "C": ["A", "B", "C"]}.get(
+                self.requirement.min_grade, ["A", "B", "C"]
+            )
+            if listing.grade not in allowed:
+                raise forms.ValidationError(
+                    f"This requirement requires Grade {self.requirement.min_grade} or better, but this listing is Grade {listing.grade}."
+                )
+        return listing
 
     def clean_price_per_kg(self):
         price, cap = self.cleaned_data["price_per_kg"], self.requirement.max_price_per_kg

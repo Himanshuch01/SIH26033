@@ -1,5 +1,4 @@
 """Custom template filters/tags: rupee formatting, crop names, SVG charts."""
-from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
 from django import template

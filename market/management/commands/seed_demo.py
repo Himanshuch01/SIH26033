@@ -8,7 +8,7 @@ history to learn from. Replace with real Agmarknet rows using `import_prices`.
 """
 import math
 import random
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
@@ -16,8 +16,9 @@ from django.utils import timezone
 
 from accounts.models import User
 from logistics.models import DeliverySlot
-from market.models import Bid, Crop, Listing, Order, OrderItem, Requirement
+from market.models import Bid, Crop, GRADE_MULT, Listing, Order, OrderItem, Requirement, grade_from_scores
 from pricing.models import MandiPrice
+from pricing.services import current_price_map
 
 # name, hindi, punjabi, category, swatch, base ₹/quintal, seasonal amplitude, peak day-of-year
 CROPS = [
@@ -125,9 +126,17 @@ class Command(BaseCommand):
 
         if not Listing.objects.exists():
             today = timezone.localdate()
-            for fu, crop, variety, stock, mn, price, (a, b, c), age, desc in LISTINGS:
+            prices = current_price_map()
+            for fu, crop, variety, stock, mn, _price, (a, b, c), age, desc in LISTINGS:
                 f = users[fu]
-                Listing.objects.create(farmer=f, crop=crops[crop], variety=variety, quantity_kg=stock, min_order_kg=mn,
+                c_obj = crops[crop]
+                grade = grade_from_scores(a, b, c)
+                mandi_kg = prices[c_obj.pk] / Decimal(100)
+                grade_mandi = mandi_kg * GRADE_MULT[grade]
+                # Price falls between 0.95 and 1.15 of mandi price per kg for its grade
+                factor = Decimal(str(round(rng.uniform(0.96, 1.14), 2)))
+                price = max(round(grade_mandi * factor, 2), Decimal("1.00"))
+                Listing.objects.create(farmer=f, crop=c_obj, variety=variety, quantity_kg=stock, min_order_kg=mn,
                                        price_per_kg=price, freshness=a, uniformity=b, blemish=c,
                                        harvest_date=today - timedelta(days=age), village=f.village,
                                        district=f.district, description=desc)
@@ -143,13 +152,13 @@ class Command(BaseCommand):
         if not Order.objects.exists():
             slots = list(DeliverySlot.objects.all())
             lst = {(l.farmer.username, l.crop.name): l for l in Listing.objects.select_related("farmer", "crop")}
-            from pricing.services import current_price_map
             prices = current_price_map()
             plan = [
-                ("rasoi", slots[0], [(("gurpreet", "Tomato"), 120), (("gurpreet", "Cauliflower"), 60)]),
-                ("sai_mess", slots[0], [(("balwinder", "Potato"), 250), (("balwinder", "Onion"), 150)]),
+                ("rasoi", slots[0], [(("gurpreet", "Tomato"), 140), (("gurpreet", "Cauliflower"), 80)]),
+                ("sai_mess", slots[0], [(("balwinder", "Potato"), 280), (("balwinder", "Onion"), 180)]),
                 ("langar_seva", slots[2], [(("harjinder", "Carrot"), 80)]),
-                ("greenbasket", slots[1], [(("manpreet", "Cabbage"), 90), (("manpreet", "Green Peas"), 30)]),
+                ("greenbasket", slots[1], [(("manpreet", "Cabbage"), 160), (("manpreet", "Green Peas"), 50),
+                                           (("sukhdev", "Kinnow"), 250), (("harjinder", "Carrot"), 100)]),
             ]
             for buyer, slot, items in plan:
                 o = Order.objects.create(buyer=users[buyer], slot=slot, address=f"{users[buyer].org_name}, {users[buyer].village}")

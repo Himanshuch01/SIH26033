@@ -1,18 +1,13 @@
 from django.contrib import admin
 
 from .models import DeliverySlot
+from .services import dispatch_slot
 
 
 @admin.action(description="Dispatch selected trucks (locks logistics cost per kg on their orders)")
 def dispatch(modeladmin, request, queryset):
-    from market.models import Order
-
     for slot in queryset.filter(status="open"):
-        per_kg = slot.cost_per_kg()
-        Order.objects.filter(slot=slot).exclude(status="cancelled").update(
-            logistics_per_kg_locked=per_kg, status="dispatched")
-        slot.status = "dispatched"
-        slot.save(update_fields=["status"])
+        dispatch_slot(slot)
 
 
 @admin.register(DeliverySlot)

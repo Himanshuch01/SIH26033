@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from accounts.models import User
 from logistics.models import DeliverySlot
-from market.models import Listing, Order, Requirement, grade_from_scores
+from market.models import Bid, Listing, Order, Requirement, grade_from_scores
 from market.services import split
 from pricing import services as price_services
 
@@ -92,6 +92,8 @@ class FlowTests(TestCase):
 
     def test_bid_and_accept(self):
         r = Requirement.objects.get(crop__name="Spinach")
+        r.min_grade = "B"
+        r.save()
         self.client.login(username="harjinder", password="demo123")
         l = Listing.objects.get(farmer__username="harjinder", crop__name="Spinach")
         resp = self.client.post(r.get_absolute_url(), {"listing": l.pk, "quantity_kg_per_week": "60", "price_per_kg": "28", "note": ""})
@@ -102,6 +104,123 @@ class FlowTests(TestCase):
         self.client.post(reverse("market:bid_decide", args=[bid.pk, "accept"]))
         r.refresh_from_db()
         self.assertEqual(r.status, "filled")
+
+    def test_cart_badge_only_active_in_stock(self):
+        self.client.login(username="rasoi", password="demo123")
+        resp = self.client.get(reverse("core:home"))
+        self.assertEqual(resp.context["cart_count"], 0)
+
+        l = Listing.objects.filter(quantity_kg__gt=10, is_active=True).first()
+        self.client.post(reverse("market:cart_add", args=[l.pk]), {"qty": "5"})
+        resp = self.client.get(reverse("core:home"))
+        self.assertEqual(resp.context["cart_count"], 1)
+
+        l.is_active = False
+        l.save(update_fields=["is_active"])
+        resp = self.client.get(reverse("core:home"))
+        self.assertEqual(resp.context["cart_count"], 0)
+
+        l.is_active = True
+        l.quantity_kg = 0
+        l.save(update_fields=["is_active", "quantity_kg"])
+        resp = self.client.get(reverse("core:home"))
+        self.assertEqual(resp.context["cart_count"], 0)
+
+    def test_order_lifecycle_and_permissions(self):
+        slot = DeliverySlot.objects.open_slots().first()
+        self.client.login(username="gurpreet", password="demo123")
+        resp = self.client.post(reverse("logistics:dispatch", args=[slot.pk]))
+        slot.refresh_from_db()
+        self.assertEqual(slot.status, "open")
+
+        admin_user = User.objects.create_superuser(username="adminuser", password="adminpassword", email="admin@example.com")
+        self.client.login(username="adminuser", password="adminpassword")
+        resp = self.client.post(reverse("logistics:dispatch", args=[slot.pk]))
+        self.assertEqual(resp.status_code, 302)
+        slot.refresh_from_db()
+        self.assertEqual(slot.status, "dispatched")
+
+        order = Order.objects.filter(slot=slot).exclude(status="cancelled").first()
+        if not order:
+            buyer = User.objects.get(username="rasoi")
+            order = Order.objects.create(buyer=buyer, slot=slot, address="Test address", status="dispatched")
+        else:
+            self.assertEqual(order.status, "dispatched")
+
+        # Another buyer cannot mark delivered
+        self.client.login(username="greenbasket", password="demo123")
+        resp = self.client.post(reverse("market:order_delivered", args=[order.pk]))
+        self.assertEqual(resp.status_code, 404)
+        order.refresh_from_db()
+        self.assertNotEqual(order.status, "delivered")
+
+        # Owner buyer can confirm delivery
+        self.client.login(username=order.buyer.username, password="demo123")
+        resp = self.client.post(reverse("market:order_delivered", args=[order.pk]))
+        self.assertEqual(resp.status_code, 302)
+        order.refresh_from_db()
+        self.assertEqual(order.status, "delivered")
+
+    def test_bid_withdrawal_and_permissions(self):
+        r = Requirement.objects.get(crop__name="Wheat")
+        r.status = "open"
+        r.save()
+        farmer = User.objects.get(username="harjinder")
+        r.bids.filter(farmer=farmer).delete()
+
+        bid = Bid.objects.create(requirement=r, farmer=farmer, quantity_kg_per_week=50, price_per_kg=25, status="pending")
+
+        # Another farmer cannot withdraw
+        self.client.login(username="gurpreet", password="demo123")
+        resp = self.client.post(reverse("market:bid_withdraw", args=[bid.pk]))
+        self.assertEqual(resp.status_code, 404)
+        self.assertTrue(Bid.objects.filter(pk=bid.pk).exists())
+
+        # Cannot withdraw accepted bid
+        bid.status = "accepted"
+        bid.save(update_fields=["status"])
+        self.client.login(username="harjinder", password="demo123")
+        resp = self.client.post(reverse("market:bid_withdraw", args=[bid.pk]))
+        self.assertTrue(Bid.objects.filter(pk=bid.pk).exists())
+
+        # Can withdraw pending bid
+        bid.status = "pending"
+        bid.save(update_fields=["status"])
+        resp = self.client.post(reverse("market:bid_withdraw", args=[bid.pk]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(Bid.objects.filter(pk=bid.pk).exists())
+
+        # Farmer can bid again after withdrawal
+        resp = self.client.get(r.get_absolute_url())
+        self.assertContains(resp, "Submit bid")
+
+    def test_requirement_min_grade_enforcement(self):
+        from market.forms import BidForm
+        r = Requirement.objects.get(crop__name="Spinach")
+        r.min_grade = "A"
+        r.save()
+        harjinder = User.objects.get(username="harjinder")
+        l = Listing.objects.get(farmer=harjinder, crop__name="Spinach")
+        self.assertEqual(l.grade, "B")
+
+        form = BidForm(requirement=r, farmer=harjinder)
+        self.assertNotIn(l, form.fields["listing"].queryset)
+        self.assertIn("You have no active Grade A or better listings", form.fields["listing"].help_text)
+
+        invalid_form = BidForm({"listing": l.pk, "quantity_kg_per_week": "50", "price_per_kg": "28"}, requirement=r, farmer=harjinder)
+        self.assertFalse(invalid_form.is_valid())
+
+        r.min_grade = "B"
+        r.save()
+        form_b = BidForm(requirement=r, farmer=harjinder)
+        self.assertIn(l, form_b.fields["listing"].queryset)
+
+    def test_home_page_no_negative_savings(self):
+        resp = self.client.get(reverse("core:home"))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode("utf-8")
+        self.assertNotIn("-₹", content)
+        self.assertNotIn("(-", content)
 
     def test_htmx_fragments(self):
         slot = DeliverySlot.objects.open_slots().first()

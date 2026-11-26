@@ -15,9 +15,11 @@ urlpatterns = [
     path("orders/", views.order_list, name="order_list"),
     path("orders/<int:pk>/", views.order_detail, name="order_detail"),
     path("orders/<int:pk>/cancel/", views.order_cancel, name="order_cancel"),
+    path("orders/<int:pk>/delivered/", views.order_delivered, name="order_delivered"),
     path("requirements/", views.requirement_list, name="requirement_list"),
     path("requirements/new/", views.requirement_create, name="requirement_create"),
     path("requirements/<int:pk>/", views.requirement_detail, name="requirement_detail"),
+    path("bids/<int:pk>/withdraw/", views.bid_withdraw, name="bid_withdraw"),
     path("bids/<int:pk>/<str:action>/", views.bid_decide, name="bid_decide"),
     path("desk/", views.dashboard, name="dashboard"),
 ]

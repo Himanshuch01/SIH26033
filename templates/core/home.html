@@ -13,10 +13,10 @@
     </div>
     <p class="small muted" style="margin-top:22px">{{ farmer_count }} farmers and FPOs, {{ listing_count }} live listings in this demo</p>
   </div>
-  {% if sample %}
+  {% if sample and sample_split %}
   <div class="slip torn">
     <h3>Where did the rupee go?</h3>
-    <p class="small muted">A real basket from this market: 10 kg {{ sample.crop }}, Grade {{ sample.grade }}, from {{ sample.farmer.display_name }}, {{ sample.village }}.</p>
+    <p class="small muted">A sample basket from this demo: 10 kg {{ sample.crop }}, Grade {{ sample.grade }}, from {{ sample.farmer.display_name }}, {{ sample.village }}.</p>
     {% with s=sample_split %}{% include "market/_split.html" %}{% endwith %}
   </div>
   {% endif %}
